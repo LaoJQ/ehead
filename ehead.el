@@ -127,4 +127,37 @@ If not found rebar.config or .git, return nil."
         (ehead-back)))))
 
 
+
+(defun ehead-grep-mark (subdir start end)
+  "Read mark and input a subdir in current erlang project to call function grep.
+default sub dir is src/"
+  (interactive
+   (list (read-string "(project-grep) Sub Dir(default src/): " nil nil "src/")
+         (region-beginning)
+         (region-end)))
+  (let* ((pattern (buffer-substring start end)))
+    (ehead-grep pattern subdir)))
+
+
+(defun ehead-grep-input (pattern subdir)
+  "Input a pattern and subdir in current erlang project to call function grep.
+default sub dir is src/"
+  (interactive
+   (list (read-string "(project-grep) Pattern: ")
+         (read-string "(project-grep) Sub Dir(default src/): " nil nil "src/")))
+  (ehead-grep pattern subdir))
+
+
+(defun ehead-grep (pattern subdir)
+  "Grep pattern in erlang project path or current path."
+  (let ((project-path (ehead-project-root-path)))
+    (save-excursion
+      (if project-path
+          (set-buffer (dired-noselect project-path))
+        (setq subdir "./"))
+      (grep (concat "grep --color -nH -re \"" pattern "\" " subdir))))
+  )
+
+
+
 (provide 'ehead)
