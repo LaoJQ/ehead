@@ -1,6 +1,6 @@
 # ehead
 
-Ehead is a plugins for Erlang code in emacs. It can help to jump to the definition of record or macro.
+Ehead is a plugins for Erlang code in emacs. It can help to jump to the definition of record or macro, jump to hrl file when point at include line, grep in erlang project.
 
 ## deps
 
@@ -38,5 +38,4 @@ However, ehead just work for record and macro, if you want to jump to the defini
 
 ## TODO
 
-+ Support to jump to header file when points in "^-include*".
 + Support to search include_lib file.
