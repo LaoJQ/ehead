@@ -15,7 +15,7 @@ Ehead depend on the standard erlang-mode library, so it need to load erlang-mode
 
 ## install
 
-Now, ehead provide two function to use, *jump to* and *jump back*, and you can set the key bind for then.
+Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for code jump, `'ehead-grep-mark` and `'ehead-grep-input` for grep in project, and you can set the key bind for then. And it need to set the erlang install path to the variable `ehead-erlang-root-path`.
 
 ```elisp
 (add-to-list 'load-path "/YOUR/EHEAD/PATH/")
@@ -23,11 +23,15 @@ Now, ehead provide two function to use, *jump to* and *jump back*, and you can s
 
 (define-key erlang-extended-mode-map "\M-." 'ehead-jump)
 (define-key erlang-extended-mode-map "\M-," 'ehead-back)
+(define-key erlang-extended-mode-map "\C-cm" 'ehead-grep-mark)
+(define-key erlang-extended-mode-map "\C-ci" 'ehead-grep-input)
+
+(setq ehead-erlang-root-path erlang-root-dir")
 ```
 
 ## use with distel
 
-However, ehead just work for record and macro, if you want to jump to the definition of function, you may need the other plugin [distel](https://github.com/massemanet/distel). It can simply integrate with distel:
+However, ehead just can jump in record or macro, if you want to jump to the definition of function, you may need the other plugin [distel](https://github.com/massemanet/distel). Ehead can simply integrate with distel:
 
 ```elisp
 ;; First, init distel.
@@ -38,4 +42,4 @@ However, ehead just work for record and macro, if you want to jump to the defini
 
 ## TODO
 
-+ Support to search include_lib file.
++ Support to jump to the definition of function in ehead, without distel which use a erlang node as a language server.
