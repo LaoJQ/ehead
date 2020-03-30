@@ -1,6 +1,12 @@
 # ehead
 
-Ehead is a plugins for Erlang code in emacs. It can help to jump to the definition of record or macro, jump to hrl file when point at include line, grep in erlang project.
+Ehead is a plugins for Erlang code program in emacs with below features:
+
++ Jump to definition of function.
++ Jump to record or macro.
++ Jump to include file.
++ Grep code in project.
++ Needn't extra erlang node for code navigation.
 
 ## deps
 
@@ -29,17 +35,6 @@ Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for co
 (setq ehead-erlang-root-path erlang-root-dir")
 ```
 
-## use with distel
-
-However, ehead just can jump in record or macro, if you want to jump to the definition of function, you may need the other plugin [distel](https://github.com/massemanet/distel). Ehead can simply integrate with distel:
-
-```elisp
-;; First, init distel.
-
-(setq ehead-jump-ring erl-find-history-ring)
-(setq ehead-jump-other-kind-interface 'erl-find-source-under-point)
-```
-
 ## TODO
 
-+ Support to jump to the definition of function in ehead, without distel which use a erlang node as a language server.
++ Support jump to the import function.

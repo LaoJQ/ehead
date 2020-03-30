@@ -1,14 +1,14 @@
 ;;; ahead.el --- Ehead is a plugins for Erlang code program in emacs.
 ;;
 ;; features:
-;; + jump to definition of function.
-;; + jump to record or macro.
-;; + jump to include file.
-;; + grep code in project.
+;; + Jump to definition of function.
+;; + Jump to record or macro.
+;; + Jump to include file.
+;; + Grep code in project.
+;; + Needn't extra erlang node for code navigation.
 ;;
 ;; deps:
 ;;  erlang
-;;  distel
 
 
 (defvar ehead-searched-sets nil
@@ -105,7 +105,8 @@ end of every ehead-jump invoke.")
           (switch-to-buffer (marker-buffer found))
           (goto-char (marker-position found))
           (setq result (search-backward name))
-          (recenter-top-bottom))
+          (recenter-top-bottom)
+          (ehead-found-flash-region))
       (message "EHEAD EARN: %s is not found." name))
     (setq ehead-searched-sets nil)
     result))
@@ -300,13 +301,48 @@ If not found rebar.config or .git, return nil."
            (ehead-search-function nil nil nil)))))
 
 
-;; TODO independence without distel
 (defun ehead-search-function (m f a)
-  ""
+  "Do search."
   (or (and f
-           (erl-search-definition f a)
-           (erl-flash-region))
+           (ehead-search-function-and-jump f a)
+           (ehead-found-flash-region))
       (message "EHEAD EARN: Not found %s:%s/%d" m f a)))
+
+
+(defun ehead-search-function-and-jump (name arity &optional type)
+  "Goto the definition of NAME/ARITY in the current buffer.
+Value is non-nil if search is successful.
+Copy from distel."
+  (let ((re (concat "^" (and type "-type\\s-*") (regexp-quote name) "\\s-*("))
+        found)
+    (save-excursion
+      (goto-char (point-min))
+      (while (and (not found)
+                  (let ((case-fold-search nil)) (re-search-forward re nil t)))
+        (backward-char)
+        (when (or (null arity) (eq (erlang-get-function-arity) arity))
+          (setq found (line-beginning-position)))))
+    (cond
+     (found
+      (goto-char found))
+     ((and arity (not type))
+      (ehead-search-function-or-type name nil nil))
+     ((not type)
+      (ehead-search-function-or-type name arity t))
+     (t
+      nil))))
+
+
+(defun ehead-found-flash-region ()
+  "Temporarily highlight region between BEG and END for TIMEOUT seconds.
+BEG and END default to the beginning and end of current line.
+Copy from distel."
+  (let ((o (make-overlay (line-beginning-position)
+                         (line-end-position))))
+    (overlay-put o 'face 'match)
+    (run-with-timer 0.3 nil #'delete-overlay o)))
+
+
 
 
 
