@@ -1,7 +1,14 @@
-;;; ahead.el --- jump to define of record or macro in erlang source file
+;;; ahead.el --- Ehead is a plugins for Erlang code program in emacs.
+;;
+;; features:
+;; + jump to definition of function.
+;; + jump to record or macro.
+;; + jump to include file.
+;; + grep code in project.
 ;;
 ;; deps:
 ;;  erlang
+;;  distel
 
 
 (defvar ehead-searched-sets nil
@@ -258,32 +265,39 @@ If not found rebar.config or .git, return nil."
 
 
 (defun ehead-jump-to-function-definition (m f a)
-  "Jump to definition of function"
-  (interactive)
+  "Jump to definition of function."
   (progn
     (ehead-add-to-ring)
-    (if (or (eq m (erlang-get-module))
-            (eq m nil)) ;; TODO import | bif
-        (when f
-          (ehead-search-function f a))
-      (let* ((erlang-root ehead-erlang-root-path)
-             (project-path (ehead-project-root-path))
-             erl-path)
-        (cond ((setq erl-path (car (split-string (shell-command-to-string (concat "find " erlang-root "/lib -type f -name '" m ".erl'")))))
-               (find-file erl-path)
-               (ehead-search-function f a))
-              ((setq erl-path (car (split-string (shell-command-to-string (concat "find " project-path " -type f -name '" m ".erl'")))))
-               (find-file erl-path)
-               (ehead-search-function f a))
-              (t
-               (message "EHEAD EARN: Not found %s:%s/%d" m f a)))))))
+    (cond ((eq m (erlang-get-module))
+           (ehead-search-function m f a))
+          ((and (eq m nil) (or (member f erlang-int-bifs) (member f erlang-ext-bifs))) ;; TODO import
+           (ehead-jump-to-module-function-definition "erlang" f a))
+          (t
+           (ehead-jump-to-module-function-definition m f a)))))
+
+
+(defun ehead-jump-to-module-function-definition (m f a)
+  "Jump to other module definition of function."
+  (let* ((erlang-root ehead-erlang-root-path)
+         (project-path (ehead-project-root-path))
+         erl-path)
+    (cond ((setq erl-path (car (split-string (shell-command-to-string (concat "find " erlang-root "/lib -type f -name '" m ".erl'")))))
+           (find-file erl-path)
+           (ehead-search-function m f a))
+          ((setq erl-path (car (split-string (shell-command-to-string (concat "find " project-path " -type f -name '" m ".erl'")))))
+           (find-file erl-path)
+           (ehead-search-function m f a))
+          (t
+           (ehead-search-function nil nil nil)))))
 
 
 ;; TODO independence without distel
-(defun ehead-search-function (f a)
+(defun ehead-search-function (m f a)
   ""
-  (and (erl-search-definition f a)
-       (erl-flash-region)))
+  (or (and f
+           (erl-search-definition f a)
+           (erl-flash-region))
+      (message "EHEAD EARN: Not found %s:%s/%d" m f a)))
 
 
 
