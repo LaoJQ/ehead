@@ -15,10 +15,6 @@ end of every ehead-jump invoke.")
   "Store the definition jump history")
 
 
-(defvar ehead-jump-other-kind-interface nil
-  "It can provide a function for ehead-jump so that
-it can jump to function, type or other kind of name.")
-
 (defvar ehead-erlang-root-path nil
   "Erlang install path")
 
@@ -31,30 +27,54 @@ it can jump to function, type or other kind of name.")
   "Jump to the definition of record or macro at current point"
   (interactive)
   (let* ((id (ehead-get-identifier-at-point))
-         (kind (car id))
-         (name (nth 1 id)))
+         (kind (erlang-id-kind id))
+         (module (erlang-id-module id))
+         (name (erlang-id-name id))
+         (arity (erlang-id-arity id)))
     (cond ((eq kind 'record)
            (ehead-jump-to-definition "^-record(\\s-*%s\\s-*," name))
           ((eq kind 'macro)
            (ehead-jump-to-definition "^-define(\\s-*%s\\s-*[,(]" name))
+          ((eq kind 'qualified-function)
+           (ehead-jump-to-function-definition module name arity))
+          ((ehead-find-hrl-at-point) ;; TODO set id for -include
+           )
           (t
-           (unless (ehead-find-hrl-at-point)
-             (if ehead-jump-other-kind-interface
-                 (funcall ehead-jump-other-kind-interface)
-               (message "EHEAD EARN: %s is not record or macro." name)))))))
+           (message "EHEAD WARN: Invalid identifier at point.")))))
 
 
 (defun ehead-get-identifier-at-point ()
-  "Get the identifier at current point. Return:
-('record \"NAME\") --- is a record
-('macro \"NAME\")  --- is a macro
-(nil \"NAME\")     --- neither nor"
+  "Get the identifier at current point. The struct is same as the return of erlang-get-identifier-at-point."
   (let* ((id (erlang-get-identifier-at-point))
          (kind (erlang-id-kind id))
-         (name (erlang-id-name id)))
-    (if (or (eq kind 'record) (eq kind 'macro))
-        (list kind name)
-      (list nil name))))
+         (module (erlang-id-module id))
+         (name (erlang-id-name id))
+         (arity (erlang-id-arity id)))
+    (cond ((and module name (not arity) (not kind))
+           (if (setq arity (ehead-get-slash-arity))
+               (list 'qualified-function module name arity)
+             id))
+          ((and name arity (not kind))
+           (list 'qualified-function module name arity))
+          (t id))))
+
+
+(defun ehead-get-slash-arity ()
+  "Get the number of arity which match 'f/a' or 'm:f/a'."
+  (let* (end-point
+         a begin-point)
+    (save-excursion
+      (re-search-forward "[,\n]")
+      (setq end-point (point)))
+    (save-excursion
+      (looking-at "/")
+      (forward-char)
+      (setq begin-point (point))
+      (re-search-forward "[0-9]+" end-point t)
+      (setq a (match-string-no-properties 0))
+      (if (equal begin-point (point))
+          nil
+        (string-to-number a)))))
 
 
 (defun ehead-jump-to-definition (str name)
@@ -223,6 +243,48 @@ If not found rebar.config or .git, return nil."
   "Jump to file and add origin to ring."
   (progn (ehead-add-to-ring)
          (find-file hrl-path)))
+
+
+
+(defun ehead-test ()
+  ""
+  (interactive)
+  (let* ((a (erl-read-call-mfa))
+         (b (erlang-get-identifier-at-point))
+         (c (ehead-get-identifier-at-point)))
+    (print a)
+    (print b)
+    (print c))
+  )
+
+
+(defun ehead-jump-to-function-definition (m f a)
+  "Jump to definition of function"
+  (interactive)
+  (progn
+    (ehead-add-to-ring)
+    (if (or (eq m (erlang-get-module))
+            (eq m nil)) ;; TODO import | bif
+        (when f
+          (ehead-search-function f a))
+      (let* ((erlang-root ehead-erlang-root-path)
+             (project-path (ehead-project-root-path))
+             erl-path)
+        (cond ((setq erl-path (car (split-string (shell-command-to-string (concat "find " erlang-root "/lib -type f -name '" m ".erl'")))))
+               (find-file erl-path)
+               (ehead-search-function f a))
+              ((setq erl-path (car (split-string (shell-command-to-string (concat "find " project-path " -type f -name '" m ".erl'")))))
+               (find-file erl-path)
+               (ehead-search-function f a))
+              (t
+               (message "EHEAD EARN: Not found %s:%s/%d" m f a)))))))
+
+
+;; TODO independence without distel
+(defun ehead-search-function (f a)
+  ""
+  (and (erl-search-definition f a)
+       (erl-flash-region)))
 
 
 
