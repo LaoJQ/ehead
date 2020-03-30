@@ -37,26 +37,27 @@ end of every ehead-jump invoke.")
            (ehead-jump-to-definition "^-define(\\s-*%s\\s-*[,(]" name))
           ((eq kind 'qualified-function)
            (ehead-jump-to-function-definition module name arity))
-          ((ehead-find-hrl-at-point) ;; TODO set id for -include
-           )
+          ((or (eq kind 'include) (eq kind 'include-lib))
+           (ehead-find-include-at-point-jump kind name))
           (t
            (message "EHEAD WARN: Invalid identifier at point.")))))
 
 
 (defun ehead-get-identifier-at-point ()
   "Get the identifier at current point. The struct is same as the return of erlang-get-identifier-at-point."
-  (let* ((id (erlang-get-identifier-at-point))
-         (kind (erlang-id-kind id))
-         (module (erlang-id-module id))
-         (name (erlang-id-name id))
-         (arity (erlang-id-arity id)))
-    (cond ((and module name (not arity) (not kind))
-           (if (setq arity (ehead-get-slash-arity))
-               (list 'qualified-function module name arity)
-             id))
-          ((and name arity (not kind))
-           (list 'qualified-function module name arity))
-          (t id))))
+  (or (ehead-find-include-at-point-id)
+      (let* ((id (erlang-get-identifier-at-point))
+             (kind (erlang-id-kind id))
+             (module (erlang-id-module id))
+             (name (erlang-id-name id))
+             (arity (erlang-id-arity id)))
+        (cond ((and module name (not arity) (not kind))
+               (if (setq arity (ehead-get-slash-arity))
+                   (list 'qualified-function module name arity)
+                 id))
+              ((and name arity (not kind))
+               (list 'qualified-function module name arity))
+              (t id)))))
 
 
 (defun ehead-get-slash-arity ()
@@ -170,40 +171,38 @@ If not found rebar.config or .git, return nil."
         (ehead-back)))))
 
 
-(defun ehead-find-hrl-at-point ()
-  "Jump to hrl file which at point."
+(defun ehead-find-include-at-point-id ()
+  "Custom -include line identifier."
   (save-excursion
     (move-end-of-line 1)
-    (let* ((project-path (ehead-project-root-path))
-           (bound (point))
-           hrl hrl-path
-           hrl-name hrl-lib)
+    (let* ((bound (point)))
       (move-beginning-of-line 1)
+      (cond ((re-search-forward ehead-regex-include bound t) ;; match normal include
+             (list 'include nil (match-string-no-properties 1) nil))
+            ((re-search-forward ehead-regex-include-lib bound t) ;; match lib include
+             (list 'include-lib nil (match-string-no-properties 1) nil))
+            (t nil)))))
 
-      (cond
-       ;; normal include
-       ((re-search-forward ehead-regex-include bound t)
-        (setq hrl (match-string-no-properties 1))
-        (cond ((and project-path (file-exists-p (setq hrl-path (concat project-path "include/" hrl))))
-               (ehead-find-hrl-at-point-goto hrl-path))
-              ((file-exists-p (setq hrl-path (expand-file-name hrl)))
-               (ehead-find-hrl-at-point-goto hrl-path))
-              (t
-               nil)))
-       ;; lib include
-       ((re-search-forward ehead-regex-include-lib bound t)
-        (setq hrl (match-string-no-properties 1))
-        (cond
-         ;; app deps lib
-         ((setq hrl-path (ehead-check-deps-hrl-lib hrl project-path))
-          (ehead-find-hrl-at-point-goto hrl-path))
-         ;; erlang standard lib
-         ((setq hrl-path (ehead-check-standard-hrl-lib hrl ehead-erlang-root-path))
-          (ehead-find-hrl-at-point-goto hrl-path))
-         ;; not match
-         (t nil)))
-       (t nil))
-      )))
+(defun ehead-find-include-at-point-jump (kind hrl)
+  "Jump to hrl file which at point."
+  (let* ((project-path (ehead-project-root-path))
+         hrl-path)
+    (cond ((eq kind 'include)
+           (cond ((and project-path (file-exists-p (setq hrl-path (concat project-path "include/" hrl))))
+                  (ehead-find-hrl-at-point-goto hrl-path))
+                 ((file-exists-p (setq hrl-path (expand-file-name hrl)))
+                  (ehead-find-hrl-at-point-goto hrl-path))
+                 (t
+                  nil)))
+          ((eq kind 'include-lib)
+           (cond ((setq hrl-path (ehead-check-deps-hrl-lib hrl project-path)) ;; app deps lib
+                  (ehead-find-hrl-at-point-goto hrl-path))
+                 ((setq hrl-path (ehead-check-standard-hrl-lib hrl ehead-erlang-root-path)) ;; erlang standard lib
+                  (ehead-find-hrl-at-point-goto hrl-path))
+                 (t nil)))
+          (t
+           nil))))
+
 
 (defun ehead-check-standard-hrl-lib (hrl erlang-root)
   "Get hrl file which is matched in '-include(*).' abs path."
