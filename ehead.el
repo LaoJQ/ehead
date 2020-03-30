@@ -261,19 +261,6 @@ If not found rebar.config or .git, return nil."
          (find-file hrl-path)))
 
 
-
-(defun ehead-test ()
-  ""
-  (interactive)
-  (let* ((a (erl-read-call-mfa))
-         (b (erlang-get-identifier-at-point))
-         (c (ehead-get-identifier-at-point)))
-    (print a)
-    (print b)
-    (print c))
-  )
-
-
 (defun ehead-jump-to-function-definition (m f a)
   "Jump to definition of function."
   (progn
@@ -304,12 +291,12 @@ If not found rebar.config or .git, return nil."
 (defun ehead-search-function (m f a)
   "Do search."
   (or (and f
-           (ehead-search-function-and-jump f a)
+           (ehead-search-function-or-type f a)
            (ehead-found-flash-region))
       (message "EHEAD EARN: Not found %s:%s/%d" m f a)))
 
 
-(defun ehead-search-function-and-jump (name arity &optional type)
+(defun ehead-search-function-or-type (name arity &optional type)
   "Goto the definition of NAME/ARITY in the current buffer.
 Value is non-nil if search is successful.
 Copy from distel."

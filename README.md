@@ -27,10 +27,13 @@ Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for co
 (add-to-list 'load-path "/YOUR/EHEAD/PATH/")
 (require 'ehead)
 
-(define-key erlang-extended-mode-map "\M-." 'ehead-jump)
-(define-key erlang-extended-mode-map "\M-," 'ehead-back)
-(define-key erlang-extended-mode-map "\C-cm" 'ehead-grep-mark)
-(define-key erlang-extended-mode-map "\C-ci" 'ehead-grep-input)
+(add-hook 'erlang-mode-hook
+          (lambda ()
+            (define-key erlang-mode-map "\M-." 'ehead-jump)
+            (define-key erlang-mode-map "\M-," 'ehead-back)
+            (define-key erlang-mode-map "\C-cm" 'ehead-grep-mark)
+            (define-key erlang-mode-map "\C-ci" 'ehead-grep-input)
+            ))
 
 (setq ehead-erlang-root-path erlang-root-dir")
 ```
