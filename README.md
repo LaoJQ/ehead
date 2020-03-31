@@ -35,7 +35,7 @@ Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for co
             (define-key erlang-mode-map "\C-ci" 'ehead-grep-input)
             ))
 
-(setq ehead-erlang-root-path erlang-root-dir")
+(setq ehead-erlang-root-lib-path (concat erlang-root-dir "/lib"))
 ```
 
 ## TODO

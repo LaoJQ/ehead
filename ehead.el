@@ -22,7 +22,7 @@ end of every ehead-jump invoke.")
   "Store the definition jump history")
 
 
-(defvar ehead-erlang-root-path nil
+(defvar ehead-erlang-root-lib-path nil
   "Erlang install path")
 
 
@@ -157,9 +157,9 @@ definition. Otherwise, return nil."
       (goto-char (point-min))
       (while (re-search-forward ehead-regex-include-lib nil t)
         (setq hrl (match-string-no-properties 1))
-        (cond ((setq hrl-path (ehead-check-standard-hrl-lib hrl ehead-erlang-root-path))
+        (cond ((setq hrl-path (ehead-check-standard-hrl-lib hrl))
                (push hrl-path stack))
-              ((setq hrl-path (ehead-check-deps-hrl-lib hrl project-path))
+              ((setq hrl-path (ehead-check-deps-hrl-lib hrl (or project-path "./")))
                (push hrl-path stack))))
       )
     stack))
@@ -212,23 +212,23 @@ If not found rebar.config or .git, return nil."
                  (t
                   nil)))
           ((eq kind 'include-lib)
-           (cond ((setq hrl-path (ehead-check-deps-hrl-lib hrl project-path)) ;; app deps lib
+           (cond ((setq hrl-path (ehead-check-deps-hrl-lib hrl (or project-path "./"))) ;; app deps lib
                   (ehead-find-hrl-at-point-goto hrl-path))
-                 ((setq hrl-path (ehead-check-standard-hrl-lib hrl ehead-erlang-root-path)) ;; erlang standard lib
+                 ((setq hrl-path (ehead-check-standard-hrl-lib hrl)) ;; erlang standard lib
                   (ehead-find-hrl-at-point-goto hrl-path))
                  (t nil)))
           (t
            nil))))
 
 
-(defun ehead-check-standard-hrl-lib (hrl erlang-root)
+(defun ehead-check-standard-hrl-lib (hrl)
   "Get hrl file which is matched in '-include(*).' abs path."
   (let* (hrl-path hrl-lib hrl-lib-other hrl-lib-path)
     (if (string-match "\\(.+?\\)/\\(.+\\)" hrl)
         (progn (setq hrl-lib (match-string 1 hrl))
                (setq hrl-lib-other (match-string 2 hrl)))
       nil)
-    (if (setq hrl-lib-path (car (split-string (shell-command-to-string (concat "find " erlang-root "/lib -type d -name '" hrl-lib "*'")))))
+    (if (setq hrl-lib-path (car (ehead-shell-find ehead-erlang-root-lib-path hrl-lib t)))
         (setq hrl-path (concat hrl-lib-path "/" hrl-lib-other))
       nil)
     (if (and hrl-path (file-exists-p hrl-path))
@@ -243,7 +243,7 @@ If not found rebar.config or .git, return nil."
                        (match-string 1 hrl)
                      nil))
     (if hrl-name
-        (let* ((ms (split-string (shell-command-to-string (concat "find " project-path " -type f -name " hrl-name))))
+        (let* ((ms (ehead-shell-find project-path hrl-name))
                found)
           (while (and (not found) (setq hrl-path (pop ms)))
             (when (string-match hrl hrl-path)
@@ -253,6 +253,13 @@ If not found rebar.config or .git, return nil."
               hrl-path
             nil))
       nil)))
+
+
+(defun ehead-shell-find (path name &optional dirp modulep)
+  "Wrap shell command 'find'. Default type of -type is f. It will return string list."
+  (let* ((type (if dirp "d" "f"))
+         (str (if modulep (concat name ".erl") name)))
+    (split-string (shell-command-to-string (concat "find " path " -type " type " -name " str " 2>/dev/null")))))
 
 
 (defun ehead-find-hrl-at-point-goto (hrl-path)
@@ -275,13 +282,12 @@ If not found rebar.config or .git, return nil."
 
 (defun ehead-jump-to-module-function-definition (m f a)
   "Jump to other module definition of function."
-  (let* ((erlang-root ehead-erlang-root-path)
-         (project-path (ehead-project-root-path))
+  (let* ((project-path (or (ehead-project-root-path) "./"))
          erl-path)
-    (cond ((setq erl-path (car (split-string (shell-command-to-string (concat "find " erlang-root "/lib -type f -name '" m ".erl'")))))
+    (cond ((setq erl-path (car (ehead-shell-find ehead-erlang-root-lib-path m nil t)))
            (find-file erl-path)
            (ehead-search-function m f a))
-          ((setq erl-path (car (split-string (shell-command-to-string (concat "find " project-path " -type f -name '" m ".erl'")))))
+          ((setq erl-path (car (ehead-shell-find project-path m nil t)))
            (find-file erl-path)
            (ehead-search-function m f a))
           (t
