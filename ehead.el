@@ -267,7 +267,7 @@ If not found rebar.config or .git, return nil."
     (ehead-add-to-ring)
     (cond ((eq m (erlang-get-module))
            (ehead-search-function m f a))
-          ((and (eq m nil) (or (member f erlang-int-bifs) (member f erlang-ext-bifs))) ;; TODO import
+          ((and (eq m nil) (or (member f erlang-int-bifs) (member f erlang-ext-bifs)))
            (ehead-jump-to-module-function-definition "erlang" f a))
           (t
            (ehead-jump-to-module-function-definition m f a)))))

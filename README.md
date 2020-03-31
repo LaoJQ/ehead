@@ -40,4 +40,3 @@ Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for co
 
 ## TODO
 
-+ Support jump to the import function.
