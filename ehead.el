@@ -133,7 +133,7 @@ definition. Otherwise, return nil."
                      (while (and (not found) (setq hrl (pop hrl-stack)))
                        (if (setq hrl-buffer (find-buffer-visiting hrl))
                            (setq found (ehead-search-definition-with-buffer hrl-buffer re))
-                         (progn (setq found (ehead-search-definition-with-buffer (setq hrl-buffer (find-file-noselect hrl)) re))
+                         (progn (setq found (ehead-search-definition-with-buffer (setq hrl-buffer (find-file-noselect hrl t)) re))
                                 (unless found
                                   (kill-buffer hrl-buffer))
                                 found))))))))
@@ -285,7 +285,7 @@ If not found rebar.config or .git, return nil."
            (find-file erl-path)
            (ehead-search-function m f a))
           (t
-           (ehead-search-function nil nil nil)))))
+           (message "EHEAD EARN: Not found %s:%s/%s" m f a)))))
 
 
 (defun ehead-search-function (m f a)
@@ -293,7 +293,7 @@ If not found rebar.config or .git, return nil."
   (or (and f
            (ehead-search-function-or-type f a)
            (ehead-found-flash-region))
-      (message "EHEAD EARN: Not found %s:%s/%d" m f a)))
+      (message "EHEAD EARN: Not found %s:%s/%s" m f a)))
 
 
 (defun ehead-search-function-or-type (name arity &optional type)
