@@ -6,6 +6,7 @@ Ehead is a plugins for Erlang code program in emacs with below features:
 + Jump to record or macro.
 + Jump to include file.
 + Grep code in project.
++ Auto completion of function when type simply.
 + Needn't extra erlang node for code navigation.
 
 ## deps
@@ -22,17 +23,22 @@ Ehead depend on the standard erlang-mode library, so it need to load erlang-mode
 ## install
 
 Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for code jump, `'ehead-grep-mark` and `'ehead-grep-input` for grep in project, and you can set the key bind for then. And it need to set the erlang install path to the variable `ehead-erlang-root-path`.
+It also simply support to auto complete of function when type `Module:`, which basic on [auto-complete](https://github.com/auto-complete/auto-complete). So, if you want it, please install `auto-complete` first.
 
 ```elisp
 (add-to-list 'load-path "/YOUR/EHEAD/PATH/")
 (require 'ehead)
+(require 'ehead-ac)
 
 (add-hook 'erlang-mode-hook
           (lambda ()
+            ;; bind key
             (define-key erlang-mode-map "\M-." 'ehead-jump)
             (define-key erlang-mode-map "\M-," 'ehead-back)
             (define-key erlang-mode-map "\C-cm" 'ehead-grep-mark)
             (define-key erlang-mode-map "\C-ci" 'ehead-grep-input)
+            ;; set ac-sources if you want
+            (setq ac-sources (append '(ac-source-ehead) ac-sources))
             ))
 
 (setq ehead-erlang-root-lib-path (expand-file-name "lib" erlang-root-dir))
@@ -40,3 +46,5 @@ Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for co
 
 ## TODO
 
++ Support compile project.
++ Support fuzzy search module.

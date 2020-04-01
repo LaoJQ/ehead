@@ -5,6 +5,7 @@
 ;; + Jump to record or macro.
 ;; + Jump to include file.
 ;; + Grep code in project.
+;; + Auto completion of function when type simply.
 ;; + Needn't extra erlang node for code navigation.
 ;;
 ;; deps:
@@ -314,7 +315,7 @@ Copy from distel."
                   (let ((case-fold-search nil)) (re-search-forward re nil t)))
         (save-excursion
           (move-beginning-of-line 1)
-        (when (or (null arity) (eq (erlang-get-function-arity) arity))
+          (when (or (null arity) (eq (erlang-get-function-arity) arity))
             (setq found (line-beginning-position))))))
     (cond
      (found
