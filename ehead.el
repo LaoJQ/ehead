@@ -107,7 +107,7 @@ end of every ehead-jump invoke.")
           (setq result (search-backward name))
           (recenter-top-bottom)
           (ehead-found-flash-region))
-      (message "EHEAD EARN: %s is not found." name))
+      (message "EHEAD WARN: %s is not found." name))
     (setq ehead-searched-sets nil)
     result))
 
@@ -291,7 +291,7 @@ If not found rebar.config or .git, return nil."
            (find-file erl-path)
            (ehead-search-function m f a))
           (t
-           (message "EHEAD EARN: Not found %s:%s/%s" m f a)))))
+           (message "EHEAD WARN: Not found %s:%s/%s" m f a)))))
 
 
 (defun ehead-search-function (m f a)
@@ -299,7 +299,7 @@ If not found rebar.config or .git, return nil."
   (or (and f
            (ehead-search-function-or-type f a)
            (ehead-found-flash-region))
-      (message "EHEAD EARN: Not found %s:%s/%s" m f a)))
+      (message "EHEAD WARN: Not found %s:%s/%s" m f a)))
 
 
 (defun ehead-search-function-or-type (name arity &optional type)
@@ -312,13 +312,15 @@ Copy from distel."
       (goto-char (point-min))
       (while (and (not found)
                   (let ((case-fold-search nil)) (re-search-forward re nil t)))
-        (backward-char)
+        (save-excursion
+          (move-beginning-of-line 1)
         (when (or (null arity) (eq (erlang-get-function-arity) arity))
-          (setq found (line-beginning-position)))))
+            (setq found (line-beginning-position))))))
     (cond
      (found
       (goto-char found))
      ((and arity (not type))
+      (message "EHEAD WARN: ignore arity %s ..." arity)
       (ehead-search-function-or-type name nil nil))
      ((not type)
       (ehead-search-function-or-type name arity t))
