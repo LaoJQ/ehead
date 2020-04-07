@@ -6,6 +6,7 @@
 ;; + Jump to include file.
 ;; + Grep code in project.
 ;; + Auto completion of function when type simply.
+;; + Compile project by reabr3.
 ;; + Needn't extra erlang node for code navigation.
 ;;
 ;; deps:
@@ -299,6 +300,7 @@ If not found rebar.config or .git, return nil."
   "Do search."
   (or (and f
            (ehead-search-function-or-type f a)
+           ;; (recenter-top-bottom)
            (ehead-found-flash-region))
       (message "EHEAD WARN: Not found %s:%s/%s" m f a)))
 
@@ -372,6 +374,20 @@ default sub dir is src/"
         (setq subdir "./"))
       (grep (concat "grep --color -nH -re \"" pattern "\" " subdir))))
   )
+
+
+
+
+
+;; Compile
+(defun ehead-compile ()
+  "Compile the project by running shell command 'rebar3 compile'."
+  (interactive)
+  (let* ((project-path (ehead-project-root-path))
+         (cmd (and project-path (concat "cd " project-path "&& " "rebar3 compile"))))
+    (if (not project-path)
+        (message "EHEAD WARN: Not found erlang project.")
+      (compilation-start cmd nil (lambda (ignore) "*Ehead-Compile*")))))
 
 
 

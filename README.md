@@ -7,6 +7,7 @@ Ehead is a plugins for Erlang code program in emacs with below features:
 + Jump to include file.
 + Grep code in project.
 + Auto completion of function when type simply.
++ Compile project by reabr3.
 + Needn't extra erlang node for code navigation.
 
 ## deps
@@ -22,7 +23,7 @@ Ehead depend on the standard erlang-mode library, so it need to load erlang-mode
 
 ## install
 
-Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for code jump, `'ehead-grep-mark` and `'ehead-grep-input` for grep in project, and you can set the key bind for then. And it need to set the erlang install path to the variable `ehead-erlang-root-path`.
+Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for code jump, `'ehead-grep-mark` and `'ehead-grep-input` for grep in project, `'ehead-compile` for compile project, and you can set the key bind for then. And it need to set the erlang install path to the variable `ehead-erlang-root-path`.
 It also simply support to auto complete of function when type `Module:`, which basic on [auto-complete](https://github.com/auto-complete/auto-complete). So, if you want it, please install `auto-complete` first.
 
 ```elisp
@@ -37,6 +38,7 @@ It also simply support to auto complete of function when type `Module:`, which b
             (define-key erlang-mode-map "\M-," 'ehead-back)
             (define-key erlang-mode-map "\C-cm" 'ehead-grep-mark)
             (define-key erlang-mode-map "\C-ci" 'ehead-grep-input)
+            (define-key erlang-mode-map "\C-c'" 'ehead-compile)
             ;; set ac-sources if you want
             (setq ac-sources (append '(ac-source-ehead) ac-sources))
             ))
@@ -46,5 +48,4 @@ It also simply support to auto complete of function when type `Module:`, which b
 
 ## TODO
 
-+ Support compile project.
 + Support fuzzy search module.
