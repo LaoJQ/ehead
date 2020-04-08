@@ -7,6 +7,7 @@
 ;; + Grep code in project.
 ;; + Auto completion of function when type simply.
 ;; + Compile project by reabr3.
+;; + Fuzzy find module in project and standard lib.
 ;; + Needn't extra erlang node for code navigation.
 ;;
 ;; deps:
