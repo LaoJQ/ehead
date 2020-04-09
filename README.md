@@ -45,7 +45,7 @@ It also support to fuzzy find module file in project or standard lib, use `'ehea
             (define-key erlang-mode-map "\C-ci" 'ehead-grep-input)
             (define-key erlang-mode-map "\C-c'" 'ehead-compile)
             ;; set ac-sources if you want
-            (setq ac-sources (append '(ac-source-ehead) ac-sources))
+            (setq ac-sources ehead-ac-source)
             ;; bind key for 'ehead-fuzzy-find-module if you want
             (define-key erlang-mode-map "\C-c\C-p'" 'ehead-fuzzy-find-module)
             ))

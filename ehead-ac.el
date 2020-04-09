@@ -41,5 +41,32 @@
     ))
 
 
+(defconst ehead-mornal-ac-source-prefix "[^A-Za-z0-9_:]\\([A-Za-z0-9_]*\\)")
+
+
+;; Similar to ac-source-words-in-same-mode-buffers
+(ac-define-source ehead-same-mode-buffers
+  `((init . ac-update-word-index)
+    (prefix . ,ehead-mornal-ac-source-prefix)
+    (candidates . (ac-word-candidates
+                   (lambda (buffer)
+                     (derived-mode-p (buffer-local-value 'major-mode buffer)))))))
+
+;; Similar to ac-source-dictionary
+(ac-define-source ehead-dictionary
+  `((candidates . ac-buffer-dictionary)
+    (prefix . ,ehead-mornal-ac-source-prefix)
+    (symbol . "d")))
+
+
+
+(defvar ehead-ac-source (list
+                         ac-source-ehead-same-mode-buffers
+                         ac-source-ehead-dictionary
+                         ac-source-ehead
+                         )
+  "Ehead's all ac-sources.")
+
+
 
 (provide 'ehead-ac)
