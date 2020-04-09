@@ -1,11 +1,11 @@
-;;; ahead-ac.el --- simply auto completion of function when type.
+;;; ahead-ac.el --- auto completion of function, record, macro and other which in the same mode buffer.
 ;;
 ;; deps:
 ;;  erlang
 ;;  auto-complete
 
 
-(defun ac-ehead-candidates ()
+(defun ac-ehead-function-candidates ()
   "ac source for completing 'Module:Function'"
   (let* ((project-path (or (ehead-project-root-path) "./"))
          module buffer exports erl-path candidates)
@@ -32,8 +32,8 @@
     ))
 
 
-(ac-define-source ehead
-  '((candidates . ac-ehead-candidates)
+(ac-define-source ehead-function
+  '((candidates . ac-ehead-function-candidates)
     (prefix . ":\\([A-Za-z0-9_]*\\)")
     (requires . 0)
     (symbol . "f")
@@ -41,7 +41,75 @@
     ))
 
 
-(defconst ehead-mornal-ac-source-prefix "[^A-Za-z0-9_:]\\([A-Za-z0-9_]*\\)")
+
+(defun ehead-ac-cands-collect-all (buffer re searched)
+  "Collect string match RE in the whole BUFFER, as well as the hrl file included by BUFFER.
+SEARCHED is to avoid endless loop by hrl file circular reference."
+  (with-current-buffer buffer
+    (let* (cands hrls hrl-buffer ret)
+      (push (buffer-file-name buffer) searched)
+      (setq cands (append cands (ehead-ac-cands-collect buffer re)))
+      (setq hrls (ehead-find-all-include))
+      (dolist (hrl hrls)
+        (if (member hrl searched)
+            (message "EHEAD WARN: circular reference %s in %s" hrl buffer)
+          (setq ret nil)
+          (cond ((setq hrl-buffer (find-buffer-visiting hrl))
+                 (setq ret (ehead-ac-cands-collect-all hrl-buffer re searched))
+                 )
+                (t
+                 (setq hrl-buffer (find-file-noselect hrl t))
+                 (setq ret (ehead-ac-cands-collect-all hrl-buffer re searched))
+                 (kill-buffer hrl-buffer)
+                 )
+                )
+          (setq cands (append cands (car ret)))
+          (setq searched (nth 1 ret))
+          )
+        )
+      (list cands searched))))
+
+
+(defun ehead-ac-cands-collect (buffer re)
+  "Collect string match RE in the whole BUFFER."
+  (let* (found cands)
+    (with-current-buffer buffer
+      (goto-char (point-min))
+      (while (setq found (ignore-errors (re-search-forward re) (match-string-no-properties 1)))
+        (push found cands)))
+    cands))
+
+
+(defun ac-ehead-record-candidates ()
+  "ac source for completing '#Record'"
+  (car (ehead-ac-cands-collect-all (current-buffer) "-record(\\s-*\\(.+?\\)\\s-*," nil)))
+
+
+(ac-define-source ehead-record
+  '((candidates . ac-ehead-record-candidates)
+    (prefix . "#\\([A-Za-z0-9_]*\\)")
+    (requires . 0)
+    (symbol . "r")
+    (cache)
+    ))
+
+
+(defun ac-ehead-macro-candidates ()
+  "ac source for completing '?MACRO'"
+  (car (ehead-ac-cands-collect-all (current-buffer) "-define(\\s-*\\(.+?\\)\\s-*[,(]" nil)))
+
+
+(ac-define-source ehead-macro
+  '((candidates . ac-ehead-macro-candidates)
+    (prefix . "?\\([A-Za-z0-9_]*\\)")
+    (requires . 0)
+    (symbol . "c")
+    (cache)
+    ))
+
+
+
+(defconst ehead-mornal-ac-source-prefix "[^A-Za-z0-9_:#?]\\([A-Za-z0-9_]*\\)")
 
 
 ;; Similar to ac-source-words-in-same-mode-buffers
@@ -63,7 +131,9 @@
 (defvar ehead-ac-source (list
                          ac-source-ehead-same-mode-buffers
                          ac-source-ehead-dictionary
-                         ac-source-ehead
+                         ac-source-ehead-function
+                         ac-source-ehead-record
+                         ac-source-ehead-macro
                          )
   "Ehead's all ac-sources.")
 

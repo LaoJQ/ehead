@@ -6,7 +6,7 @@ Ehead is a plugins for Erlang code program in emacs with below features:
 + Jump to record or macro.
 + Jump to include file.
 + Grep code in project.
-+ Auto completion of function when type simply.
++ Auto completion.
 + Compile project by reabr3.
 + Fuzzy find module in project and standard lib.
 + Needn't extra erlang node for code navigation.
@@ -26,7 +26,7 @@ Ehead depend on the standard erlang-mode library, so it need to load erlang-mode
 
 Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for code jump, `'ehead-grep-mark` and `'ehead-grep-input` for grep in project, `'ehead-compile` for compile project, and you can set the key bind for then. And it need to set the erlang install path to the variable `ehead-erlang-root-path`.
 
-It also simply support to auto complete of function when type `Module:`, which basic on [auto-complete](https://github.com/auto-complete/auto-complete). So, if you want it, please install `auto-complete` first.
+It also support to auto completion of function, record, macro and other which in the same mode buffer, which basic on [auto-complete](https://github.com/auto-complete/auto-complete). So, if you want it, please install `auto-complete` first.
 
 It also support to fuzzy find module file in project or standard lib, use `'ehead-fuzzy-find-module` function, which depends on [find-file-in-project](https://github.com/technomancy/find-file-in-project).
 

@@ -5,7 +5,7 @@
 ;; + Jump to record or macro.
 ;; + Jump to include file.
 ;; + Grep code in project.
-;; + Auto completion of function when type simply.
+;; + Auto completion.
 ;; + Compile project by reabr3.
 ;; + Fuzzy find module in project and standard lib.
 ;; + Needn't extra erlang node for code navigation.
