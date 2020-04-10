@@ -13,8 +13,8 @@
       (re-search-backward "[^A-Za-z0-9_]\\([A-Za-z0-9_]+\\)\\s-*:" nil t)
       (setq module (match-string-no-properties 1)))
     (when module
-      (or (setq erl-path (car (ehead-shell-find ehead-erlang-root-lib-path module nil t)))
-          (setq erl-path (car (ehead-shell-find project-path module nil t))))
+      (or (setq erl-path (car (ehead-shell-find-file ehead-erlang-root-lib-path module t)))
+          (setq erl-path (car (ehead-shell-find-file project-path module t))))
       (cond ((not erl-path)
              ;; (message "EHEAD DEBUG: module %s" module)
              nil)

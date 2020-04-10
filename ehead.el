@@ -231,7 +231,7 @@ If not found rebar.config or .git, return nil."
         (progn (setq hrl-lib (match-string 1 hrl))
                (setq hrl-lib-other (match-string 2 hrl)))
       nil)
-    (if (setq hrl-lib-path (car (ehead-shell-find ehead-erlang-root-lib-path hrl-lib t)))
+    (if (setq hrl-lib-path (car (ehead-shell-find-dir ehead-erlang-root-lib-path hrl-lib)))
         (setq hrl-path (concat hrl-lib-path "/" hrl-lib-other))
       nil)
     (if (and hrl-path (file-exists-p hrl-path))
@@ -246,7 +246,7 @@ If not found rebar.config or .git, return nil."
                        (match-string 1 hrl)
                      nil))
     (if hrl-name
-        (let* ((ms (ehead-shell-find project-path hrl-name))
+        (let* ((ms (ehead-shell-find-file project-path hrl-name))
                found)
           (while (and (not found) (setq hrl-path (pop ms)))
             (when (string-match hrl hrl-path)
@@ -258,11 +258,16 @@ If not found rebar.config or .git, return nil."
       nil)))
 
 
-(defun ehead-shell-find (path name &optional dirp modulep)
-  "Wrap shell command 'find'. Default type of -type is f. It will return string list."
-  (let* ((type (if dirp "d" "f"))
-         (str (if modulep (concat name ".erl") name)))
-    (split-string (shell-command-to-string (concat "find " path " -type " type " -name " str " 2>/dev/null")))))
+(defun ehead-shell-find-file (path name &optional modulep)
+  "Wrap shell command 'find' to find the file which match NAME. If MODULEP is t, auto append '.erl' to NAME."
+  (let* ((str (if modulep (concat name ".erl") name)))
+    (split-string (shell-command-to-string (concat "find " path " -type f -name " str " 2>/dev/null")))))
+
+
+(defun ehead-shell-find-dir (path prefix-dir)
+  "Wrap shell command 'find' to find the dir which match PREFIX-DIR."
+  (let* ((re (concat prefix-dir "*")))
+    (split-string (shell-command-to-string (concat "find " path " -type d -name " re " 2>/dev/null")))))
 
 
 (defun ehead-find-hrl-at-point-goto (hrl-path)
@@ -287,10 +292,10 @@ If not found rebar.config or .git, return nil."
   "Jump to other module definition of function."
   (let* ((project-path (or (ehead-project-root-path) "./"))
          erl-path)
-    (cond ((setq erl-path (car (ehead-shell-find ehead-erlang-root-lib-path m nil t)))
+    (cond ((setq erl-path (car (ehead-shell-find-file ehead-erlang-root-lib-path m t)))
            (find-file erl-path)
            (ehead-search-function m f a))
-          ((setq erl-path (car (ehead-shell-find project-path m nil t)))
+          ((setq erl-path (car (ehead-shell-find-file project-path m t)))
            (find-file erl-path)
            (ehead-search-function m f a))
           (t
