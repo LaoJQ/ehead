@@ -208,36 +208,36 @@ If not found rebar.config or .git, return nil."
   (let* ((project-path (ehead-project-root-path))
          hrl-path)
     (cond ((eq kind 'include)
-           (cond ((and project-path (file-exists-p (setq hrl-path (concat project-path "include/" hrl))))
-                  (ehead-find-hrl-at-point-goto hrl-path))
-                 ((file-exists-p (setq hrl-path (expand-file-name hrl)))
-                  (ehead-find-hrl-at-point-goto hrl-path))
-                 (t
-                  nil)))
+           (setq hrl-path (ehead-ensure-project-hrl-file-path hrl)))
           ((eq kind 'include-lib)
-           (cond ((setq hrl-path (ehead-check-deps-hrl-lib hrl (or project-path "./"))) ;; app deps lib
-                  (ehead-find-hrl-at-point-goto hrl-path))
-                 ((setq hrl-path (ehead-check-standard-hrl-lib hrl)) ;; erlang standard lib
-                  (ehead-find-hrl-at-point-goto hrl-path))
-                 (t nil)))
-          (t
-           nil))))
+           (setq hrl-path (or (ehead-check-deps-hrl-lib hrl (or project-path "./"))
+                              (ehead-check-standard-hrl-lib hrl))))
+          (t nil))
+    (ehead-find-hrl-at-point-goto hrl-path)))
+
+
+(defun ehead-ensure-project-hrl-file-path (hrl)
+  "Get the abs path of project include file."
+  (let* ((project-path (ehead-project-root-path))
+         hrl-path)
+    (or (and project-path (file-exists-p (setq hrl-path (concat project-path "include/" hrl))))
+        (file-exists-p (setq hrl-path (expand-file-name hrl))))
+    hrl-path))
 
 
 (defun ehead-check-standard-hrl-lib (hrl)
-  "Get hrl file which is matched in '-include(*).' abs path."
+  "Get hrl file which is matched in '-include_lib(*).' abs path."
   (let* (hrl-path hrl-lib hrl-lib-other hrl-lib-path)
-    (if (string-match "\\(.+?\\)/\\(.+\\)" hrl)
-        (progn (setq hrl-lib (match-string 1 hrl))
-               (setq hrl-lib-other (match-string 2 hrl)))
-      nil)
-    (if (setq hrl-lib-path (car (ehead-shell-find-dir ehead-erlang-root-lib-path hrl-lib)))
-        (setq hrl-path (concat hrl-lib-path "/" hrl-lib-other))
-      nil)
-    (if (and hrl-path (file-exists-p hrl-path))
-        hrl-path
-      nil)
-    ))
+    (if (not (string-match "\\(.+?\\)/\\(.+\\)" hrl))
+        (ehead-ensure-project-hrl-file-path hrl)
+      (and (setq hrl-lib (ignore-errors (match-string 1 hrl)))
+           (setq hrl-lib-other (ignore-errors (match-string 2 hrl)))
+           (setq hrl-lib-path (car (ehead-shell-find-dir ehead-erlang-root-lib-path hrl-lib)))
+           (setq hrl-path (concat hrl-lib-path "/" hrl-lib-other))
+           (file-exists-p hrl-path)
+           hrl-path)
+      )))
+
 
 (defun ehead-check-deps-hrl-lib (hrl project-path)
   "Get hrl file which is matched in '-include_lib(*).' abs path."
@@ -272,8 +272,9 @@ If not found rebar.config or .git, return nil."
 
 (defun ehead-find-hrl-at-point-goto (hrl-path)
   "Jump to file and add origin to ring."
-  (progn (ehead-add-to-ring)
-         (find-file hrl-path)))
+  (when hrl-path
+    (progn (ehead-add-to-ring)
+           (find-file hrl-path))))
 
 
 (defun ehead-jump-to-function-definition (m f a)
