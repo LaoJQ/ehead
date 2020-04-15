@@ -110,7 +110,7 @@ end of every ehead-jump invoke.")
           (setq result (search-backward name))
           (recenter-top-bottom)
           (ehead-found-flash-region))
-      (message "EHEAD WARN: %s is not found." name))
+      (message "EHEAD WARN: Not found symbol %s." name))
     (setq ehead-searched-sets nil)
     result))
 
@@ -213,7 +213,10 @@ If not found rebar.config or .git, return nil."
            (setq hrl-path (or (ehead-check-deps-hrl-lib hrl (or project-path "./"))
                               (ehead-check-standard-hrl-lib hrl))))
           (t nil))
-    (ehead-find-hrl-at-point-goto hrl-path)))
+    (if hrl-path
+        (ehead-find-hrl-at-point-goto hrl-path)
+      (message "EHEAD WARN: Not found hrl file %s." hrl)
+      nil)))
 
 
 (defun ehead-ensure-project-hrl-file-path (hrl)
@@ -221,7 +224,8 @@ If not found rebar.config or .git, return nil."
   (let* ((project-path (ehead-project-root-path))
          hrl-path)
     (or (and project-path (file-exists-p (setq hrl-path (concat project-path "include/" hrl))))
-        (file-exists-p (setq hrl-path (expand-file-name hrl))))
+        (file-exists-p (setq hrl-path (expand-file-name hrl)))
+        (setq hrl-path nil))
     hrl-path))
 
 
@@ -272,9 +276,8 @@ If not found rebar.config or .git, return nil."
 
 (defun ehead-find-hrl-at-point-goto (hrl-path)
   "Jump to file and add origin to ring."
-  (when hrl-path
-    (progn (ehead-add-to-ring)
-           (find-file hrl-path))))
+  (ehead-add-to-ring)
+  (find-file hrl-path))
 
 
 (defun ehead-jump-to-function-definition (m f a)
@@ -330,7 +333,7 @@ Copy from distel."
      (found
       (goto-char found))
      ((and arity (not type))
-      (message "EHEAD WARN: ignore arity %s ..." arity)
+      (message "EHEAD WARN: Ignore arity %s ..." arity)
       (ehead-search-function-or-type name nil nil))
      ((not type)
       (ehead-search-function-or-type name arity t))
