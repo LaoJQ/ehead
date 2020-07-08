@@ -5,6 +5,7 @@ Ehead is a plugins for Erlang code program in emacs with below features:
 + Jump to definition of function.
 + Jump to record or macro.
 + Jump to include file.
++ Get function reference.
 + Grep code in project.
 + Auto completion.
 + Compile project by reabr3.
@@ -41,6 +42,7 @@ It also support to fuzzy find module file in project or standard lib, use `'ehea
             ;; bind key
             (define-key erlang-mode-map "\M-." 'ehead-jump)
             (define-key erlang-mode-map "\M-," 'ehead-back)
+            (define-key erlang-mode-map "\C-cn" 'ehead-get-func-reference)
             (define-key erlang-mode-map "\C-cm" 'ehead-grep-mark)
             (define-key erlang-mode-map "\C-ci" 'ehead-grep-input)
             (define-key erlang-mode-map "\C-c'" 'ehead-compile)

@@ -4,6 +4,7 @@
 ;; + Jump to definition of function.
 ;; + Jump to record or macro.
 ;; + Jump to include file.
+;; + Get function reference.
 ;; + Grep code in project.
 ;; + Auto completion.
 ;; + Compile project by reabr3.
@@ -383,6 +384,20 @@ default sub dir is src/"
           (set-buffer (dired-noselect project-path))
         (setq subdir "./"))
       (grep (concat "grep --color -nH -re \"" pattern "\" " subdir))))
+  )
+
+
+(defun ehead-get-func-reference ()
+  "Find all references of the pointed function from others module in current erlang project."
+  (interactive)
+  (let* (
+         (m (erlang-get-module))
+         (s (thing-at-point 'symbol))
+         (f (and s (regexp-quote s)))
+         )
+    (if (and m f)
+        (ehead-grep (concat m ":" f) "src/")
+      (message "EHEAD WARN: Wrong symbol at point.")))
   )
 
 
