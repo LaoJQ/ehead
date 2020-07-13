@@ -27,13 +27,26 @@
              (with-current-buffer buffer (setq exports (erlang-get-export)))
              (kill-buffer buffer))))
     (dolist (elm exports)
-      (push (car elm) candidates))
+      (push (concat (car elm) "/" (number-to-string (cdr elm))) candidates))
     candidates
     ))
 
 
+(defun ac-ehead-function-action ()
+  "Alter the form of selected candidate which is 'F/A' to 'F'."
+  (let* (delta)
+    (save-excursion
+      (let* ((old-point (point))
+             (new-point (re-search-backward "/[0-9]" (line-beginning-position) t)))
+        (when new-point
+          (setq delta (- new-point old-point)))))
+    (when delta
+      (delete-char delta))))
+
+
 (ac-define-source ehead-function
   '((candidates . ac-ehead-function-candidates)
+    (action . ac-ehead-function-action)
     (prefix . ":\\([A-Za-z0-9_]*\\)")
     (requires . 0)
     (symbol . "f")
