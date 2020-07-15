@@ -422,11 +422,7 @@ default sub dir is src/"
 (defun ehead-grep (pattern subdir)
   "Grep pattern in erlang project path or current path."
   (let ((main-path (ehead-root-path-main-project)))
-    (save-excursion
-      (if main-path
-          (set-buffer (dired-noselect main-path))
-        (setq subdir "./"))
-      (grep (concat "grep --color -nH -re \"" pattern "\" " subdir))))
+    (grep (concat "cd " main-path " && " "grep --color -nH -re \"" pattern "\" " subdir)))
   )
 
 
@@ -452,7 +448,7 @@ default sub dir is src/"
   "Compile the project by running shell command 'rebar3 compile'."
   (interactive)
   (let* ((main-path (ehead-root-path-main-project))
-         (cmd (and main-path (concat "cd " main-path "&& " "rebar3 compile"))))
+         (cmd (and main-path (concat "cd " main-path " && " "rebar3 compile"))))
     (if (file-exists-p (expand-file-name "rebar.config" main-path))
         (compilation-start cmd nil (lambda (ignore) "*Ehead-Compile*"))
       (message "EHEAD WARN: Not found erlang project."))))
