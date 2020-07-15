@@ -20,16 +20,32 @@
              nil)
             ((setq buffer (find-buffer-visiting erl-path))
              ;; (message "EHEAD DEBUG: module %s" module)
-             (with-current-buffer buffer (setq exports (erlang-get-export))))
+             (with-current-buffer buffer (setq exports (ehead-ac-erlang-export))))
             ((file-exists-p erl-path)
              ;; (message "EHEAD DEBUG: module %s" module)
              (setq buffer (find-file-noselect erl-path t))
-             (with-current-buffer buffer (setq exports (erlang-get-export)))
+             (with-current-buffer buffer (setq exports (ehead-ac-erlang-export)))
              (kill-buffer buffer))))
     (dolist (elm exports)
       (push (concat (car elm) "/" (number-to-string (cdr elm))) candidates))
     candidates
     ))
+
+
+(defun ehead-ac-erlang-export ()
+  "Return all the exported functions and arity in current buffer, with the formmat of `(function . arity)."
+  (let* ((re erlang-defun-prompt-regexp)
+         list)
+    (save-excursion
+      (goto-char (point-min))
+      (if (re-search-forward "^-compile(export_all" (point-max) t)
+          (progn (while (re-search-forward re (point-max) t)
+                   (save-excursion
+                     (beginning-of-line)
+                     (push (cons (erlang-get-function-name) (erlang-get-function-arity)) list)
+                     ))
+                 list)
+        (erlang-get-export)))))
 
 
 (defun ac-ehead-function-action ()
