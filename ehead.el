@@ -34,6 +34,10 @@ end of every ehead-jump invoke.")
 (defconst ehead-regex-include-lib "^-include_lib(\\s-*\"\\(.+?\\)\"\\s-*)")
 
 
+(defvar ehead-user-porject-list nil
+  "It's a list, to cache the User's projetc root path.")
+
+
 (defun ehead-jump ()
   "Jump to the definition of record or macro at current point"
   (interactive)
@@ -146,14 +150,15 @@ definition. Otherwise, return nil."
 
 (defun ehead-find-all-include ()
   "Find all include file in current buffer, and push to list which will be return."
-  (let* ((project-path (ehead-project-root-path))
+  (let* ((main-path (ehead-root-path-main-project))
+         (app-path (ehead-root-path-sub-app))
          hrl hrl-path stack)
     (save-excursion
       ;; normal include
       (goto-char (point-min))
       (while (re-search-forward ehead-regex-include nil t)
         (setq hrl (match-string-no-properties 1))
-        (cond ((and project-path (file-exists-p (setq hrl-path (concat project-path "include/" hrl))))
+        (cond ((file-exists-p (setq hrl-path (expand-file-name (concat "include/" hrl) app-path)))
                (push hrl-path stack))
               ((file-exists-p (setq hrl-path (expand-file-name hrl)))
                (push hrl-path stack))))
@@ -163,20 +168,58 @@ definition. Otherwise, return nil."
         (setq hrl (match-string-no-properties 1))
         (cond ((setq hrl-path (ehead-check-standard-hrl-lib hrl))
                (push hrl-path stack))
-              ((setq hrl-path (ehead-check-deps-hrl-lib hrl (or project-path "./")))
+              ((setq hrl-path (ehead-check-deps-hrl-lib hrl main-path))
                (push hrl-path stack))))
       )
     stack))
 
 
-(defun ehead-project-root-path ()
-  "Find the erlang project root path and return path string.
-If not found rebar.config or .git, return nil."
-  (let* (project-path)
-    (if (setq project-path (or (locate-dominating-file default-directory "rebar.config")
-                               (locate-dominating-file default-directory ".git")))
-        (expand-file-name project-path)
-      nil)))
+(defun ehead-root-path-sub-app ()
+  "Return the root path of one dep app, or one std app. (Used for find hrl file with the form of '-include(*).')"
+  (let* ((cur-path (expand-file-name default-directory)))
+    (if (string-match (expand-file-name "[^/]*/" ehead-erlang-root-lib-path) cur-path)
+        (match-string 0 cur-path)
+      (ehead-search-raw-app-root-path cur-path))))
+
+(defun ehead-root-path-main-project ()
+  "Return the user or std project root path. (Used for other case except for 'ehead-root-path-sub-app' say.)"
+  (let* ((cur-path (expand-file-name default-directory))
+         root-path)
+    (if (string-match-p ehead-erlang-root-lib-path cur-path)
+        ehead-erlang-root-lib-path
+      (dolist (p0 ehead-user-porject-list root-path)
+        (when (and (not root-path) (string-match-p p0 cur-path))
+          (setq root-path p0)))
+      (if root-path
+          root-path
+        (ehead-input-project-root-path)))))
+
+
+(defun ehead-input-project-root-path ()
+  "Input the main project root path in minibuffer, and cache in the variable 'ehead-user-porject-list'."
+  (let* ((path (read-string "(Add a project root path): " (ehead-search-raw-app-root-path))))
+    (if (file-exists-p path)
+        (push path ehead-user-porject-list)
+      (error "EHEAD WARN: '%s' not exist." path))
+    (message "EHEAD LOG: Added a project root path: %s." path)
+    path))
+
+
+(defun ehead-search-raw-app-root-path (&optional cur-path)
+  "Find the erlang app root path and return path string.
+If not found rebar.config or .git/, return default-directory."
+  (unless cur-path
+    (setq cur-path default-directory))
+  (expand-file-name (or (locate-dominating-file cur-path "rebar.config")
+                        (locate-dominating-file cur-path ".git")
+                        cur-path)))
+
+
+(defun ehead-lookup-ehead-user-porject-list ()
+  "Show all ehead-user-porject stored."
+  (interactive)
+  (message "%s" ehead-user-porject-list))
+
 
 
 (defun ehead-back ()
@@ -206,13 +249,13 @@ If not found rebar.config or .git, return nil."
 
 (defun ehead-find-include-at-point-jump (kind hrl)
   "Jump to hrl file which at point."
-  (let* ((project-path (ehead-project-root-path))
+  (let* ((main-path (ehead-root-path-main-project))
          hrl-path)
     (cond ((eq kind 'include)
            (setq hrl-path (ehead-ensure-project-hrl-file-path hrl)))
           ((eq kind 'include-lib)
-           (setq hrl-path (or (ehead-check-deps-hrl-lib hrl (or project-path "./"))
-                              (ehead-check-standard-hrl-lib hrl))))
+           (setq hrl-path (or (ehead-check-standard-hrl-lib hrl)
+                              (ehead-check-deps-hrl-lib hrl main-path))))
           (t nil))
     (if hrl-path
         (ehead-find-hrl-at-point-goto hrl-path)
@@ -222,9 +265,9 @@ If not found rebar.config or .git, return nil."
 
 (defun ehead-ensure-project-hrl-file-path (hrl)
   "Get the abs path of project include file."
-  (let* ((project-path (ehead-project-root-path))
+  (let* ((app-path (ehead-root-path-sub-app))
          hrl-path)
-    (or (and project-path (file-exists-p (setq hrl-path (concat project-path "include/" hrl))))
+    (or (file-exists-p (setq hrl-path (expand-file-name (concat "include/" hrl) app-path)))
         (file-exists-p (setq hrl-path (expand-file-name hrl)))
         (setq hrl-path nil))
     hrl-path))
@@ -295,12 +338,12 @@ If not found rebar.config or .git, return nil."
 
 (defun ehead-jump-to-module-function-definition (m f a)
   "Jump to other module definition of function."
-  (let* ((project-path (or (ehead-project-root-path) "./"))
+  (let* ((main-path (ehead-root-path-main-project))
          erl-path)
     (cond ((setq erl-path (car (ehead-shell-find-file ehead-erlang-root-lib-path m t)))
            (find-file erl-path)
            (ehead-search-function m f a))
-          ((setq erl-path (car (ehead-shell-find-file project-path m t)))
+          ((setq erl-path (car (ehead-shell-find-file main-path m t)))
            (find-file erl-path)
            (ehead-search-function m f a))
           (t
@@ -378,10 +421,10 @@ default sub dir is src/"
 
 (defun ehead-grep (pattern subdir)
   "Grep pattern in erlang project path or current path."
-  (let ((project-path (ehead-project-root-path)))
+  (let ((main-path (ehead-root-path-main-project)))
     (save-excursion
-      (if project-path
-          (set-buffer (dired-noselect project-path))
+      (if main-path
+          (set-buffer (dired-noselect main-path))
         (setq subdir "./"))
       (grep (concat "grep --color -nH -re \"" pattern "\" " subdir))))
   )
@@ -408,11 +451,11 @@ default sub dir is src/"
 (defun ehead-compile ()
   "Compile the project by running shell command 'rebar3 compile'."
   (interactive)
-  (let* ((project-path (ehead-project-root-path))
-         (cmd (and project-path (concat "cd " project-path "&& " "rebar3 compile"))))
-    (if (not project-path)
-        (message "EHEAD WARN: Not found erlang project.")
-      (compilation-start cmd nil (lambda (ignore) "*Ehead-Compile*")))))
+  (let* ((main-path (ehead-root-path-main-project))
+         (cmd (and main-path (concat "cd " main-path "&& " "rebar3 compile"))))
+    (if (file-exists-p (expand-file-name "rebar.config" main-path))
+        (compilation-start cmd nil (lambda (ignore) "*Ehead-Compile*"))
+      (message "EHEAD WARN: Not found erlang project."))))
 
 
 

@@ -7,14 +7,14 @@
 
 (defun ac-ehead-function-candidates ()
   "ac source for completing 'Module:Function'"
-  (let* ((project-path (or (ehead-project-root-path) "./"))
+  (let* ((main-path (ehead-root-path-main-project))
          module buffer exports erl-path candidates)
     (save-excursion
       (re-search-backward "[^A-Za-z0-9_]\\([A-Za-z0-9_]+\\)\\s-*:" nil t)
       (setq module (match-string-no-properties 1)))
     (when module
       (or (setq erl-path (car (ehead-shell-find-file ehead-erlang-root-lib-path module t)))
-          (setq erl-path (car (ehead-shell-find-file project-path module t))))
+          (setq erl-path (car (ehead-shell-find-file main-path module t))))
       (cond ((not erl-path)
              ;; (message "EHEAD DEBUG: module %s" module)
              nil)

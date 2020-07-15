@@ -25,7 +25,9 @@ Ehead depend on the standard erlang-mode library, so it need to load erlang-mode
 
 ## install
 
-Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for code jump, `'ehead-grep-mark` and `'ehead-grep-input` for grep in project, `'ehead-compile` for compile project, and you can set the key bind for then. And it need to set the erlang install path to the variable `ehead-erlang-root-path`.
+Now, ehead provide some functions to use, `'ehead-jump` and `'ehead-back` for code jump, `'ehead-grep-mark` and `'ehead-grep-input` for grep in project, `'ehead-compile` for compile project, and you can set the key bind for then. And it need to set the erlang install path to the variable `ehead-erlang-root-lib-path`.
+
+For accessing file in every user-project friendly, ehead provides a global variable `ehead-user-porject-list` which is a list to store every user-project root path. It will query for user to input current project root path, and after that, all the files can be considered in which user-project. And you can also put some user-project root path to `ehead-user-porject-list` first in `.emacs` config file, in order to avoid to input every time.
 
 It also support to auto completion of function, record, macro and other which in the same mode buffer, which basic on [auto-complete](https://github.com/auto-complete/auto-complete). So, if you want it, please install `auto-complete` first.
 
@@ -53,6 +55,9 @@ It also support to fuzzy find module file in project or standard lib, use `'ehea
             ))
 
 (setq ehead-erlang-root-lib-path (expand-file-name "lib" erlang-root-dir))
+
+(setq ehead-user-porject-list '("/YOU/PROJECT1/ROOT/PATH/" "/YOU/PROJECT2/ROOT/PATH/"))
+
 ```
 
 ## TODO

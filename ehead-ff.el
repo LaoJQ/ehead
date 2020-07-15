@@ -27,13 +27,13 @@
 (defun ehead-fuzzy-find-module ()
   "Fuzzy find project module file in project or standard module file."
   (interactive)
-  (let* ((project-path (ehead-project-root-path))
-         (app-collection (ehead-fuzzy-find-all-module-collection project-path))
+  (let* ((main-path (ehead-root-path-main-project))
+         (app-collection (ehead-fuzzy-find-all-module-collection main-path))
          (collection (append app-collection (ehead-fuzzy-find-module-std-cache-get))))
     (if (not collection)
         (message "EHEAD WARN: Not found erl file in project.")
       (ffip-completing-read
-       (format "Module in project %s: " project-path)
+       (format "Module in project %s: " main-path)
        collection
        `(lambda (cand) (find-file (cdr cand)))
        )
