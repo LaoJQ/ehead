@@ -31,7 +31,7 @@ For accessing file in every user-project friendly, ehead provides a global varia
 
 It also support to auto completion of function, record, macro and other which in the same mode buffer, which basic on [auto-complete](https://github.com/auto-complete/auto-complete). So, if you want it, please install `auto-complete` first.
 
-It also support to fuzzy find module file in project or standard lib, use `'ehead-fuzzy-find-module` function, which depends on [find-file-in-project](https://github.com/technomancy/find-file-in-project).
+It also support to fuzzy find module file in project or standard lib, use `'ehead-fuzzy-find-module` function, which depends on [helm](https://github.com/emacs-helm/helm).
 
 ```elisp
 (add-to-list 'load-path "/YOUR/EHEAD/PATH/")
